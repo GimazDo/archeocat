@@ -1,8 +1,9 @@
 package com.github.gimazdo.archeocat.service;
 
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import com.github.gimazdo.archeocat.util.ButtonNames;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -10,6 +11,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.github.gimazdo.archeocat.util.ButtonNames.*;
+import static com.github.gimazdo.archeocat.util.Messages.*;
 
 public enum BotState {
 
@@ -19,23 +23,26 @@ public enum BotState {
         @Override
         public void handleInput(BotContext context) {
             switch (context.getInput().getMessage().getText()) {
-                case "ИНФО":
+                case INFO:
                     next = INFORMATION;
                     break;
-                case "Я ПОТЕРЯЛСЯ":
+                case I_LOST:
                     next = LOST;
                     break;
-                case "Я ХОЧУ ЗНАТЬ БОЛЬШЕ":
+                case I_WANT_KNOW_MORE:
                     next = I_WANT_MORE;
                     break;
-                case "О ФЕСТИВАЛЕ":
+                case ButtonNames.ABOUT:
                     next = ABOUT;
                     break;
-                case "ДОНАТЫ":
+                case ButtonNames.DONATE:
                     next = DONATE;
                     break;
-                case "ТЕСТ":
+                case QUEST:
                     next = TEST;
+                    break;
+                case ButtonNames.ROUTE:
+                    next = ROUTE;
                     break;
                 default:
                     next = START;
@@ -63,12 +70,13 @@ public enum BotState {
             KeyboardRow keyboardButtons = new KeyboardRow();
             List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
-            keyboardButtons1.add("ИНФО");
-            keyboardButtons2.add("Я ПОТЕРЯЛСЯ");
-            keyboardButtons3.add("Я ХОЧУ ЗНАТЬ БОЛЬШЕ");
-            keyboardButtons4.add("О ФЕСТИВАЛЕ");
-            keyboardButtons5.add("ДОНАТЫ");
-            keyboardButtons.add("ТЕСТ");
+            keyboardButtons1.add(INFO);
+            keyboardButtons2.add(I_LOST);
+            keyboardButtons3.add(I_WANT_KNOW_MORE);
+            keyboardButtons4.add(ButtonNames.ABOUT);
+            keyboardButtons5.add(ButtonNames.DONATE);
+            keyboardButtons.add(QUEST);
+            keyboardButtons.add(ButtonNames.ROUTE);
 
             keyboardRowList.add(keyboardButtons2);
             keyboardRowList.add(keyboardButtons);
@@ -82,6 +90,202 @@ public enum BotState {
         }
     },
 
+    ROUTE {
+        BotState next;
+
+        @Override
+        public void handleInput(BotContext context) {
+            switch (context.getInput().getMessage().getText()) {
+                case ENTRANCE_MAIN:
+                    next = MAIN;
+                    break;
+                case ENTRANCE_SHUVALOVSKY:
+                    next = SHUVALOVSKY;
+                    break;
+                default:
+                    next = START;
+                    sendMessage(context, "Неизвестное сообщение", null);
+            }
+        }
+
+        @Override
+        public void enter(BotContext context) {
+            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+            KeyboardRow keyboardButtons1 = new KeyboardRow();
+            KeyboardRow keyboardButtons2 = new KeyboardRow();
+            List<KeyboardRow> keyboardRowList = new ArrayList<>();
+
+            keyboardButtons1.add(ENTRANCE_MAIN);
+            keyboardButtons2.add(ENTRANCE_SHUVALOVSKY);
+
+            keyboardRowList.add(keyboardButtons1);
+            keyboardRowList.add(keyboardButtons2);
+
+            keyboard.setKeyboard(keyboardRowList);
+            sendMessage(context, routeMessage,keyboard);
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+    SHUVALOVSKY{
+        BotState next;
+
+        @Override
+        public void handleInput(BotContext context) {
+            switch (context.getInput().getMessage().getText()) {
+                case LITE:
+                    next = LITE_SHUVALOVSKY;
+                    break;
+                case MEDIUM:
+                    next = MEDIUM_SHUVALOVSKY;
+                    break;
+                case HARD:
+                    next = HARD_SHUVALOVSKY;
+                    break;
+                default:
+                    next = START;
+                    sendMessage(context, "Неизвестное сообщение", null);
+            }
+        }
+        @Override
+        public void enter(BotContext context) {
+            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+            KeyboardRow keyboardButtons1 = new KeyboardRow();
+            KeyboardRow keyboardButtons2 = new KeyboardRow();
+            List<KeyboardRow> keyboardRowList = new ArrayList<>();
+
+            keyboardButtons1.add(LITE);
+            keyboardButtons1.add(MEDIUM);
+            keyboardButtons2.add(HARD);
+
+            keyboardRowList.add(keyboardButtons1);
+            keyboardRowList.add(keyboardButtons2);
+
+            keyboard.setKeyboard(keyboardRowList);
+            sendMessage(context, shuvalovskyStart,keyboard);
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+    MAIN{
+        BotState next;
+
+        @Override
+        public void handleInput(BotContext context) {
+            switch (context.getInput().getMessage().getText()) {
+                case LITE:
+                    next = LITE_MAIN;
+                    break;
+                case MEDIUM:
+                    next = MEDIUM_MAIN;
+                    break;
+                case HARD:
+                    next = HARD_MAIN;
+                    break;
+                default:
+                    next = START;
+                    sendMessage(context, "Неизвестное сообщение", null);
+            }
+        }
+        @Override
+        public void enter(BotContext context) {
+            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+            KeyboardRow keyboardButtons1 = new KeyboardRow();
+            KeyboardRow keyboardButtons2 = new KeyboardRow();
+            List<KeyboardRow> keyboardRowList = new ArrayList<>();
+
+            keyboardButtons1.add(LITE);
+            keyboardButtons1.add(MEDIUM);
+            keyboardButtons2.add(HARD);
+
+            keyboardRowList.add(keyboardButtons1);
+            keyboardRowList.add(keyboardButtons2);
+
+            keyboard.setKeyboard(keyboardRowList);
+            sendMessage(context, mainStart,keyboard);
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+    },
+    LITE_SHUVALOVSKY(false){
+
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseLite, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
+    MEDIUM_SHUVALOVSKY(false){
+
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseMedium, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
+    HARD_SHUVALOVSKY(false){
+
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseHard, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
+    LITE_MAIN(false){
+
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseLite, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
+    MEDIUM_MAIN{
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseMedium, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
+    HARD_MAIN{
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, choseHard, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+        }
+
+        @Override
+        public BotState nextState() {
+            return START;
+        }
+    },
     INFORMATION {
         @Override
         public void enter(BotContext context) {
@@ -106,8 +310,8 @@ public enum BotState {
             KeyboardRow keyboardButtons2 = new KeyboardRow();
             List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
-            keyboardButtons1.add("1");
-            keyboardButtons2.add("3");
+            keyboardButtons1.add(FIRST_FLOOR);
+            keyboardButtons2.add(THIRD_FLOOR);
 
             keyboardRowList.add(keyboardButtons1);
             keyboardRowList.add(keyboardButtons2);
@@ -120,11 +324,11 @@ public enum BotState {
         public void handleInput(BotContext context) {
 
             switch (context.getInput().getMessage().getText()) {
-                case "1":
+                case FIRST_FLOOR:
                     InputFile inputFile = new InputFile(new File("E:\\MyProjects\\archeocat\\src\\main\\resources\\shema-ermitazha-1-etazh.jpg"));
                     sendPhoto(context, inputFile, ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
-                case "3":
+                case THIRD_FLOOR:
                     InputFile inputFile2 = new InputFile(new File("E:\\MyProjects\\archeocat\\src\\main\\resources\\karta-ermitazha-3-etazh.jpg"));
                     sendPhoto(context, inputFile2, ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
@@ -157,11 +361,6 @@ public enum BotState {
         }
 
         @Override
-        public void handleInput(BotContext context) {
-            // do nothing by default
-        }
-
-        @Override
         public BotState nextState() {
             return START;
         }
@@ -174,23 +373,23 @@ public enum BotState {
             KeyboardRow keyboardButtons2 = new KeyboardRow();
             List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
-            keyboardButtons1.add("Команда Эрмитажа");
-            keyboardButtons2.add("Команда нашего проекта ВШЭ");
+            keyboardButtons1.add(HERMITAGE_TEAM);
+            keyboardButtons2.add(HSE_TEAM);
 
             keyboardRowList.add(keyboardButtons1);
             keyboardRowList.add(keyboardButtons2);
 
             keyboard.setKeyboard(keyboardRowList);
-            sendMessage(context, "Здесь какая-то вводная инфа", keyboard);
+            sendMessage(context, "Немного о людях. \n Выберете о чём вы хотите узнать подробнее", keyboard);
         }
 
         @Override
         public void handleInput(BotContext context) {
             switch (context.getInput().getMessage().getText()) {
-                case "Команда Эрмитажа":
+                case HERMITAGE_TEAM:
                     sendMessage(context, "Тут будет о людях", ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
-                case "Команда нашего проекта ВШЭ":
+                case HSE_TEAM:
                     sendMessage(context, "Тут будет о людях", ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
                 default:
@@ -215,7 +414,6 @@ public enum BotState {
             return START;
         }
     };
-
 
     private static BotState[] states;
     private final boolean inputNeeded;
@@ -265,6 +463,7 @@ public enum BotState {
             e.printStackTrace();
         }
     }
+
 
     public boolean isInputNeeded() {
         return inputNeeded;
