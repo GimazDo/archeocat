@@ -1,9 +1,9 @@
 package com.github.gimazdo.archeocat.entity;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
@@ -11,15 +11,17 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Room {
+public class Image {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Lob
-    private String description;
+    @Type(type = "org.hibernate.type.ImageType")
+    private byte[] image;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    private Image image;
+    private String mimeType;
+
 
 }

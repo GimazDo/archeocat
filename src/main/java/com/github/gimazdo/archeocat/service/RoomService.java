@@ -5,6 +5,7 @@ import com.github.gimazdo.archeocat.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class RoomService {
 
     private final RoomRepository roomRepository;
@@ -28,12 +30,21 @@ public class RoomService {
         }
     }
 
+    public Room getById(Long id){
+       return roomRepository.getById(id);
+    }
+
+
     public Room add(Room room){
         return roomRepository.save(room);
     }
 
     public List<Room> getAll(){
         return roomRepository.findAll();
+    }
+
+    public void delete(Room room){
+        roomRepository.delete(room);
     }
 
 }

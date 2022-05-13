@@ -2,7 +2,7 @@ package com.github.gimazdo.archeocat.util;
 
 public class ButtonNames {
 
-    public static final String INFO = "Информация";
+    public static final String INFO = "Об экспозиции";
     public static final String ABOUT = "Об АРХЕОфесте";
     public static final String ROUTE = "Маршрут";
     public static final String ENTRANCE_SHUVALOVSKY  = "Вход Шуваловский подъезд";

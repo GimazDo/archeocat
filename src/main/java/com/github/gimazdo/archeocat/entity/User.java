@@ -20,4 +20,6 @@ public class User {
 
     private int StateId;
 
+    private Long testId;
+
 }

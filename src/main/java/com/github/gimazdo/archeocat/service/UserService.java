@@ -12,13 +12,11 @@ public class UserService {
     private final UserRepository userRepository;
 
 
-    public User findByChatId(Long chatId)
-    {
+    public User findByChatId(Long chatId) {
         return userRepository.findByChatId(chatId);
     }
 
-    public User addUser(User user)
-    {
+    public User addUser(User user) {
         return userRepository.save(user);
     }
 

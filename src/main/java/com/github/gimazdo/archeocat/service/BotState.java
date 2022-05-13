@@ -1,16 +1,21 @@
 package com.github.gimazdo.archeocat.service;
 
+import com.github.gimazdo.archeocat.entity.Answer;
+import com.github.gimazdo.archeocat.entity.Question;
+import com.github.gimazdo.archeocat.entity.Room;
+import com.github.gimazdo.archeocat.entity.User;
 import com.github.gimazdo.archeocat.util.ButtonNames;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.gimazdo.archeocat.util.ButtonNames.*;
 import static com.github.gimazdo.archeocat.util.Messages.*;
@@ -40,6 +45,7 @@ public enum BotState {
                     break;
                 case QUEST:
                     next = TEST;
+                    context.getUser().setTestId(0L);
                     break;
                 case ButtonNames.ROUTE:
                     next = ROUTE;
@@ -89,7 +95,6 @@ public enum BotState {
             return keyboard;
         }
     },
-
     ROUTE {
         BotState next;
 
@@ -122,7 +127,7 @@ public enum BotState {
             keyboardRowList.add(keyboardButtons2);
 
             keyboard.setKeyboard(keyboardRowList);
-            sendMessage(context, routeMessage,keyboard);
+            sendMessage(context, routeMessage, keyboard);
         }
 
         @Override
@@ -130,7 +135,7 @@ public enum BotState {
             return next;
         }
     },
-    SHUVALOVSKY{
+    SHUVALOVSKY {
         BotState next;
 
         @Override
@@ -150,6 +155,7 @@ public enum BotState {
                     sendMessage(context, "Неизвестное сообщение", null);
             }
         }
+
         @Override
         public void enter(BotContext context) {
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
@@ -165,7 +171,7 @@ public enum BotState {
             keyboardRowList.add(keyboardButtons2);
 
             keyboard.setKeyboard(keyboardRowList);
-            sendMessage(context, shuvalovskyStart,keyboard);
+            sendMessage(context, shuvalovskyStart, keyboard);
         }
 
         @Override
@@ -173,7 +179,7 @@ public enum BotState {
             return next;
         }
     },
-    MAIN{
+    MAIN {
         BotState next;
 
         @Override
@@ -193,6 +199,7 @@ public enum BotState {
                     sendMessage(context, "Неизвестное сообщение", null);
             }
         }
+
         @Override
         public void enter(BotContext context) {
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
@@ -208,7 +215,7 @@ public enum BotState {
             keyboardRowList.add(keyboardButtons2);
 
             keyboard.setKeyboard(keyboardRowList);
-            sendMessage(context, mainStart,keyboard);
+            sendMessage(context, mainStart, keyboard);
         }
 
         @Override
@@ -216,8 +223,7 @@ public enum BotState {
             return next;
         }
     },
-    LITE_SHUVALOVSKY(false){
-
+    LITE_SHUVALOVSKY(false) {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseLite, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -228,8 +234,7 @@ public enum BotState {
             return START;
         }
     },
-    MEDIUM_SHUVALOVSKY(false){
-
+    MEDIUM_SHUVALOVSKY(false) {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseMedium, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -240,8 +245,7 @@ public enum BotState {
             return START;
         }
     },
-    HARD_SHUVALOVSKY(false){
-
+    HARD_SHUVALOVSKY(false) {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseHard, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -252,8 +256,7 @@ public enum BotState {
             return START;
         }
     },
-    LITE_MAIN(false){
-
+    LITE_MAIN(false) {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseLite, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -264,7 +267,7 @@ public enum BotState {
             return START;
         }
     },
-    MEDIUM_MAIN{
+    MEDIUM_MAIN {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseMedium, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -275,7 +278,7 @@ public enum BotState {
             return START;
         }
     },
-    HARD_MAIN{
+    HARD_MAIN {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, choseHard, ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -287,6 +290,8 @@ public enum BotState {
         }
     },
     INFORMATION {
+        BotState next;
+
         @Override
         public void enter(BotContext context) {
             sendMessage(context, "Введите номер зала", ReplyKeyboardMarkup.builder().clearKeyboard().build());
@@ -294,12 +299,31 @@ public enum BotState {
 
         @Override
         public void handleInput(BotContext context) {
-            sendMessage(context, "Не реализовано", ReplyKeyboardMarkup.builder().clearKeyboard().build());
+            try {
+                Long roomId = Long.parseLong(context.getInput().getMessage().getText());
+                Room room = context.getRoomService().getById(roomId);
+                String messageText;
+                if (room == null) {
+                    messageText = NO_INFO_ABOUT_ROOM;
+                } else {
+                    if (room.getImage() != null) {
+                        InputFile inputFile = new InputFile(new ByteArrayInputStream(room.getImage().getImage()), "info");
+                        sendPhoto(context, inputFile, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+                    }
+                    messageText = room.getDescription();
+                }
+                sendMessage(context, messageText, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+                next = START;
+            } catch (NumberFormatException e) {
+                next = INFORMATION;
+                sendMessage(context, "Вы ввели не число", ReplyKeyboardMarkup.builder().clearKeyboard().build());
+            }
+
         }
 
         @Override
         public BotState nextState() {
-            return START;
+            return next;
         }
     },
     LOST {
@@ -325,11 +349,11 @@ public enum BotState {
 
             switch (context.getInput().getMessage().getText()) {
                 case FIRST_FLOOR:
-                    InputFile inputFile = new InputFile(new File("E:\\MyProjects\\archeocat\\src\\main\\resources\\shema-ermitazha-1-etazh.jpg"));
+                    InputFile inputFile = new InputFile(BotState.class.getClassLoader().getResourceAsStream("firstFloor.jpg"), "firstFloor.jpg");
                     sendPhoto(context, inputFile, ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
                 case THIRD_FLOOR:
-                    InputFile inputFile2 = new InputFile(new File("E:\\MyProjects\\archeocat\\src\\main\\resources\\karta-ermitazha-3-etazh.jpg"));
+                    InputFile inputFile2 = new InputFile(BotState.class.getClassLoader().getResourceAsStream("thirdFloor.jpg"), "thirdFloor.jpg");
                     sendPhoto(context, inputFile2, ReplyKeyboardMarkup.builder().clearKeyboard().build());
                     break;
                 default:
@@ -354,10 +378,87 @@ public enum BotState {
             return START;
         }
     },
-    TEST(false) {
+    TEST {
+        BotState next;
+        boolean last = false;
+
         @Override
         public void enter(BotContext context) {
-            sendMessage(context, "Не реализовано", ReplyKeyboardMarkup.builder().clearKeyboard().build());
+            User user = context.getUser();
+            Question question = context.getQuestionService().getNext(user.getTestId());
+            user.setTestId(question.getIndex());
+            context.getUserService().addUser(user);
+            Long lastIndex = context.getQuestionService().getLastIndex();
+            if (Objects.equals(question.getIndex(), lastIndex)) {
+                last = true;
+            }
+            if (question.getImage() != null) {
+                InputFile inputFile = new InputFile(new ByteArrayInputStream(question.getImage().getImage()), "question");
+                sendPhoto(context, inputFile, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+            }
+            if(question.isTextAnswer()){
+                sendMessage(context, question.getDescription());
+            }
+            else{
+                sendMessage(context, question.getDescription(), createKeyboard(question));
+            }
+        }
+
+        @Override
+        public void handleInput(BotContext context) {
+
+            User user = context.getUser();
+            Question question = context.getQuestionService().getNext(user.getTestId());
+            Answer answer = question.getAnswerSet().stream().filter(Answer::isCorrect).findFirst().get();
+            if (context.getInput().getMessage().getText().equals(answer.getText())) {
+                if (last) {
+                    next = TEST_FINISH;
+                } else {
+                    next = TEST;
+                }
+                user.setTestId(user.getTestId() + 1L);
+                context.getUserService().addUser(user);
+                if (question.getImageWin() != null) {
+                    InputFile inputFile = new InputFile(new ByteArrayInputStream(question.getImageWin().getImage()), "answer");
+                    sendPhoto(context, inputFile, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+                }
+                    sendMessage(context, question.getTextIfWin(), ReplyKeyboardMarkup.builder().clearKeyboard().build());
+
+
+            } else {
+                next = TEST;
+                sendMessage(context, ANSWER_INCORRECT, ReplyKeyboardMarkup.builder().clearKeyboard().build());
+            }
+
+        }
+
+        @Override
+        public BotState nextState() {
+            return next;
+        }
+
+        private ReplyKeyboardMarkup createKeyboard(Question question) {
+
+            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+            if(question.isTextAnswer()){
+                keyboard.setKeyboard(new ArrayList<>());
+                return keyboard;
+            }
+            List<KeyboardRow> keyboardRowList = new ArrayList<>();
+            final KeyboardRow[] keyboardButtons = {new KeyboardRow()};
+            question.getAnswerSet().forEach(answer -> {
+                keyboardButtons[0].add(answer.getText());
+                keyboardRowList.add(keyboardButtons[0]);
+                keyboardButtons[0] = new KeyboardRow();
+            });
+            keyboard.setKeyboard(keyboardRowList);
+            return keyboard;
+        }
+    },
+    TEST_FINISH(false) {
+        @Override
+        public void enter(BotContext context) {
+            sendMessage(context, YOU_PASS_TEST, ReplyKeyboardMarkup.builder().clearKeyboard().build());
         }
 
         @Override
@@ -365,6 +466,7 @@ public enum BotState {
             return START;
         }
     },
+
     ABOUT {
         @Override
         public void enter(BotContext context) {
@@ -443,7 +545,19 @@ public enum BotState {
         if (!(text == null || text.isEmpty()))
             message.setText(text);
         message.setReplyMarkup(keyboard);
-
+        message.setParseMode("HTML");
+        try {
+            context.getBot().execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+    protected void sendMessage(BotContext context, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(context.getInput().getMessage().getChatId().toString());
+        if (!(text == null || text.isEmpty()))
+            message.setText(text);
+        message.setParseMode("HTML");
         try {
             context.getBot().execute(message);
         } catch (TelegramApiException e) {
