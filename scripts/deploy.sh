@@ -10,6 +10,9 @@ scp -i ~/.ssh/id_rsa \
 echo 'Restart server...'
 
 ssh -i ~/.ssh/id_rsa root@213.226.124.244 << EOF
+cd ..
+cd archeocat/
+rm archeocatlog.txt
 systemctl restart tgbot
 EOF
 

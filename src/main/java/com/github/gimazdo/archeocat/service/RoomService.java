@@ -30,8 +30,8 @@ public class RoomService {
         }
     }
 
-    public Room getById(Long id){
-       return roomRepository.getById(id);
+    public Optional<Room> getById(Long id){
+       return roomRepository.findById(id);
     }
 
 

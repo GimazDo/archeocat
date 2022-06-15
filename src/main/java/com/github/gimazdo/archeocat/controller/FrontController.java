@@ -135,7 +135,7 @@ public class FrontController {
     }
     @PostMapping("/deleteRoom")
     public String deleteRoom(@RequestParam("room_id") Long roomId) {
-        Room room = roomService.getById(roomId);
+        Room room = roomService.getById(roomId).get();
         roomService.delete(room);
         return "redirect:/rooms";
     }
